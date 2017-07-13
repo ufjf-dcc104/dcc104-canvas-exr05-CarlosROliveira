@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>DCC104 - Exercício 05</title>
+    <script src="Sprite.js" type="text/javascript"></script>
+    <script src="Level.js" type="text/javascript"></script>
+	<script src="SpriteTiro.js" type="text/javascript"></script>
+	<script src="SpriteInimigo.js" type="text/javascript"></script>
+  </head>
+  <body>
+    <h1>DCC104 - Exercício 05</h1>
+    <canvas height="400px" width="400px" style="background: #CDCDCD;"></canvas>
+
+    <script type="text/javascript">
+      var eCanvas = document.getElementsByTagName('canvas')[0];
+      var ctx = eCanvas.getContext("2d");
+
+      var fps = 60;
+      var atual = new Date();
+      var anterior = new Date();
+      var dt = 1/fps;
+	  
+	  var perdeu = false;
+
+      var jogador1 = new Sprite();
+	  jogador1.x = 20;
+	  jogador1.y = 100;
+	  var jogador2 = new Sprite();
+	  jogador2.x = 360;
+	  jogador2.y = 280;
+	  jogador2.color = "#ff6666";
+      var acelerandoX = false;
+      var acelerandoY = false;
+      var level = new Level();
+      level.init();
+
+      desenha();
+
+      function desenha(){
+        requestAnimationFrame(desenha);
+        atual = new Date();
+        dt = (atual - anterior)/1000;
+        ctx.clearRect(0,0,eCanvas.width,eCanvas.height);
+        
+        //level.perseguir(jogador1, dt);
+
+        jogador1.mover(dt);
+		jogador2.mover(dt);
+        level.mover(dt);
+		
+		//Se o Tiro do oponente 2 atingiu o oponente 1
+		jogador1.colidiuComOponente(jogador2.tiros, function(inimigo, alvo){
+			jogador2.tiros.splice(alvo,1);
+			jogador1.vida = jogador1.vida - 20;
+          //inimigo.color = "green";
+        });
+		
+		//Se o Tiro do oponente 1 atingiu o oponente 2
+		jogador2.colidiuComOponente(jogador1.tiros, function(inimigo, alvo){
+			jogador1.tiros.splice(alvo,1);
+			jogador2.vida = jogador2.vida - 20;
+          //inimigo.color = "green";
+        });
+		
+		/*level.colidiuComBarreiras(level.barreiras, function(inimigo, alvo){
+          inimigo.color = "black";
+        });*/
+
+        level.colidiuComAtirador(jogador1, function(inimigo, alvo){
+			jogador1.vida = jogador1.vida - 10;
+			//inimigo.color = "yellow";
+        });
+		
+		level.colidiuComAtirador(jogador2, function(inimigo, alvo){
+			jogador2.vida = jogador2.vida - 10;
+			//inimigo.color = "white";
+        });
+		
+		//Se o Tiro do oponente 1 atingiu a barreira
+		level.colidiuComTiro(jogador1.tiros, function(inimigo, alvo){
+          //inimigo.color = "red";
+		  jogador1.tiros.splice(alvo,1);
+        });
+		
+		//Se o Tiro do oponente 2 atingiu a barreira
+		level.colidiuComTiro(jogador2.tiros, function(inimigo, alvo){
+          //inimigo.color = "white";
+		  jogador2.tiros.splice(alvo,1);
+        });
+		
+		jogador1.desenhar(ctx);
+		jogador2.desenhar(ctx);
+        level.desenhar(ctx);
+		
+		if(jogador1.vida <= 0){
+			perdeu = true;
+			jogador1.vida = 0;
+		}
+		if(jogador2.vida <= 0){
+			perdeu = true;
+			jogador2.vida = 0;
+		}
+		
+		ctx.fillStyle = "#FFF";
+		ctx.font="13px Arial";
+		ctx.fillText("Vida P1", 20, 15);
+		ctx.fillStyle = "gray";
+        ctx.fillRect(20, 20, 100,5)
+        ctx.strokeRect(20, 20, 100,5)
+        ctx.fillStyle = "green";
+        ctx.fillRect(20, 20, jogador1.vida,5)
+        ctx.strokeRect(20, 20, jogador1.vida,5)
+		
+		ctx.fillStyle = "#FFF";
+		ctx.font="13px Arial";
+		ctx.fillText("Vida P2", 280, 15);
+		ctx.fillStyle = "gray";
+        ctx.fillRect(280, 20, 100,5)
+        ctx.strokeRect(280, 20, 100,5)
+        ctx.fillStyle = "green";
+        ctx.fillRect(280, 20, jogador2.vida,5)
+        ctx.strokeRect(280, 20, jogador2.vida,5)
+
+		if(perdeu){
+			ctx.fillStyle = "#FFF";
+			ctx.font="30px Arial";
+			ctx.fillText("Fim de Jogo", 127, 200);
+			if(jogador1.vida <= 0){
+				ctx.font="23px Arial";
+				ctx.fillText("Jogador 2 Win", 135, 230);
+			}else{
+				ctx.font="23px Arial";
+				ctx.fillText("Jogador 1 Win", 135, 230);
+			}
+			ctx.font="13px Arial";
+			ctx.fillText("'n' para Iniciar Jogo", 150, 250);
+		}
+		
+        anterior = atual;
+      }
+	  
+	  //addEventListener("click",function(e){
+		//console.log(e.x + " " + e.y)
+		//console.log(e.layerX + " " + e.layerY)
+		//if (e.layerX <= 400 && e.layerY <= 400)
+		//	
+      //});
+	  
+	  addEventListener("keydown",function(e){
+        switch (e.keyCode) {
+		  case 78:
+			if(perdeu){
+				jogador1 = new Sprite();
+				jogador1.x = 20;
+				jogador1.y = 100;
+				jogador2 = new Sprite();
+				jogador2.x = 360;
+				jogador2.y = 280;
+				jogador2.color = "#ff6666";
+				acelerandoX = false;
+				acelerandoY = false;
+				level = new Level();
+				level.init();
+				perdeu = false;
+			}
+			break;
+		  case 32:
+			if(!perdeu){
+				jogador1.atirar();
+			}
+            break;
+          case 65:
+			if(!perdeu){
+				jogador1.vx = -80;
+				jogador1.direcao = "esquerda";
+				acelerandoX = true;
+			}
+            break;
+		  case 87:
+			if(!perdeu){
+				jogador1.vy = -80;
+				jogador1.direcao = "topo";
+				acelerandoY = true;
+			}
+            break;
+          case 68:
+			if(!perdeu){
+				jogador1.vx = +80;
+				jogador1.direcao = "direita";
+				acelerandoX = true;
+			}
+            break;
+		  case 83:
+			if(!perdeu){
+				jogador1.vy = +80;
+				jogador1.direcao = "baixo";
+				acelerandoY = true;
+			}
+			break;
+				
+          case 13:
+			if(!perdeu){
+				jogador2.atirar();
+			}
+            break;
+          case 37:
+			if(!perdeu){
+				jogador2.vx = -80;
+				jogador2.direcao = "esquerda";
+				acelerandoX = true;
+			}
+            break;
+		  case 38:
+			if(!perdeu){
+				jogador2.vy = -80;
+				jogador2.direcao = "topo";
+				acelerandoY = true;
+			}
+            break;
+          case 39:
+			if(!perdeu){
+				jogador2.vx = +80;
+				jogador2.direcao = "direita";
+				acelerandoX = true;
+			}
+            break;
+		  case 40:
+			if(!perdeu){
+				jogador2.vy = +80;
+				jogador2.direcao = "baixo";
+				acelerandoY = true;
+			}
+          default:
+        }
+      })
+	  
+	  addEventListener("keyup",function(e){
+        switch (e.keyCode) {
+          case 65:
+				jogador1.vx = 0;
+				acelerandoX = false;
+            break;
+		  case 87:
+				jogador1.vy = 0;
+				acelerandoY = false;
+            break;
+          case 68:
+				jogador1.vx = 0;
+				acelerandoX = false;
+            break;
+		  case 83:
+				jogador1.vy = 0;
+				acelerandoY = false;
+				break;
+				
+          case 37:
+				jogador2.vx = 0;
+				acelerandoX = false;
+            break;
+		  case 38:
+				jogador2.vy = 0;
+				acelerandoY = false;
+            break;
+          case 39:
+				jogador2.vx = 0;
+				acelerandoX = false;
+            break;
+		  case 40:
+				jogador2.vy = 0;
+				acelerandoY = false;
+          default:
+        }
+      })
+	  
+    </script>
+
+  </body>
+</html>
